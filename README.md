@@ -14,7 +14,32 @@ chmod +x chatbang
 sudo mv chatbang /usr/bin/chatbang
 ```
 
-Install from source:
+## Installation on NixOS
+
+### You can run `Chatbang` directly with Nix flakes:
+
+```bash
+nix run github:ahmedhosssam/chatbang
+```
+
+### Or system wide using profiles
+
+```bash
+nix profile install github:ahmedhosssam/chatbang
+```
+### For flakes:
+
+in your inputs add
+```nix
+chatbang.url = "github:ahmedhosssam/chatbang";
+```
+in your packages:
+
+```nix
+inputs.chatbang.${pkgs.system}.default
+```
+
+## Install from source:
 
 ```bash
 git clone git@github.com:ahmedhosssam/chatbang.git
