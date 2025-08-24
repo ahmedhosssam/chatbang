@@ -14,7 +14,7 @@ chmod +x chatbang
 sudo mv chatbang /usr/bin/chatbang
 ```
 
-Install from source:
+## Install from source:
 
 ```bash
 git clone git@github.com:ahmedhosssam/chatbang.git

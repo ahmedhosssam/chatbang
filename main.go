@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/user"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -18,6 +19,24 @@ import (
 )
 
 const ctxTime = 2000
+
+var browsers = []string{
+	"google-chrome",
+	"chrome",
+	"chromium",
+	"chromium-browser",
+	"brave-browser",
+	"edge",
+}
+
+func detectBrowser() (string, error) {
+	for _, name := range browsers {
+		if path, err := exec.LookPath(name); err == nil {
+			return path, nil
+		}
+	}
+	return "", fmt.Errorf("no Chromium-based browser found in PATH")
+}
 
 func main() {
 	usr, err := user.Current()
@@ -51,36 +70,33 @@ func main() {
 	}
 
 	if info.Size() == 0 {
-		defaults := "browser=/usr/bin/google-chrome\n"
-		_, err = io.WriteString(configFile, defaults)
-		if err != nil {
-			fmt.Println("Error writing default config:", err)
-			return
-		}
+		io.WriteString(configFile, "browser=\n")
 		configFile.Seek(0, 0)
 	}
 
+	// read browser from config
 	var defaultBrowser string
-
 	scanner := bufio.NewScanner(configFile)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-
 		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			continue
+		if len(parts) == 2 && strings.TrimSpace(parts[0]) == "browser" {
+			defaultBrowser = strings.TrimSpace(parts[1])
 		}
+	}
 
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-
-		if key == "browser" {
-			defaultBrowser = value
+	// Step 2: if config is empty or invalid, detect in PATH
+	if defaultBrowser == "" || exec.Command(defaultBrowser).Run() != nil {
+		detectedBrowser, err := detectBrowser()
+		if err != nil {
+			fmt.Println("No Chromium-based browser found in PATH or config.")
+			fmt.Println("Please install a Chromium-based browser or edit the config at", configPath)
+			return
 		}
+		defaultBrowser = detectedBrowser
 	}
 
 	if len(os.Args) > 1 {
